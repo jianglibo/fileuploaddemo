@@ -1,2 +1,13 @@
+spring:
+  devtools:
+    restart:
+      pollInterval: 2s
+      enabled: true
+      # excludes: 
+      # additional-exclude:
+      # trigger-file:
+    livereload:
+      enabled: true
+      port: ${TOBE_LIVERELOAD_PORT:35792}
 server:
-  port: 4044
+  port: ${TOBE_SERVER_PORT:4044}
