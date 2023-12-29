@@ -1,13 +1,15 @@
 package me.resp.fileuploaddemo;
 
-import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
+import org.springframework.boot.builder.SpringApplicationBuilder;
 
 @SpringBootApplication
 public class FileuploaddemoApplication {
 
 	public static void main(String[] args) {
-		SpringApplication.run(FileuploaddemoApplication.class, args);
+		new SpringApplicationBuilder()
+				.profiles("dev") // and so does this
+				.sources(FileuploaddemoApplication.class)
+				.run(args);
 	}
-
 }
