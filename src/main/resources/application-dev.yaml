@@ -8,6 +8,12 @@ spring:
       # trigger-file:
     livereload:
       enabled: true
-      port: ${TOBE_LIVERELOAD_PORT:35792}
+      port: ${TOBF_LIVERELOAD_PORT:35792}
 server:
-  port: 4044
+  port: ${TOBF_SERVER_PORT:4044}
+logging:
+  level:
+    root: INFO
+    me:
+      resp:
+        fileuploaddemo: DEBUG
