@@ -1,0 +1,223 @@
+// create 2k content
+16. Auto-configuration
+Prev 	Part III. Using Spring Boot	 Next
+16. Auto-configuration
+Spring Boot auto-configuration attempts to automatically configure your Spring application based on the jar dependencies that you have added. For example, if HSQLDB is on your classpath, and you have not manually configured any database connection beans, then Spring Boot auto-configures an in-memory database.
+
+You need to opt-in to auto-configuration by adding the @EnableAutoConfiguration or @SpringBootApplication annotations to one of your @Configuration classes.
+
+[Tip]
+You should only ever add one @SpringBootApplication or @EnableAutoConfiguration annotation. We generally recommend that you add one or the other to your primary @Configuration class only.
+
+16.1 Gradually Replacing Auto-configuration
+Auto-configuration is non-invasive. At any point, you can start to define your own configuration to replace specific parts of the auto-configuration. For example, if you add your own DataSource bean, the default embedded database support backs away.
+
+If you need to find out what auto-configuration is currently being applied, and why, start your application with the --debug switch. Doing so enables debug logs for a selection of core loggers and logs a conditions report to the console.
+
+16.2 Disabling Specific Auto-configuration Classes
+If you find that specific auto-configuration classes that you do not want are being applied, you can use the exclude attribute of @EnableAutoConfiguration to disable them, as shown in the following example:
+
+import org.springframework.boot.autoconfigure.*;
+import org.springframework.boot.autoconfigure.jdbc.*;
+import org.springframework.context.annotation.*;
+
+@Configuration
+@EnableAutoConfiguration(exclude={DataSourceAutoConfiguration.class})
+public class MyConfiguration {
+}
+If the class is not on the classpath, you can use the excludeName attribute of the annotation and specify the fully qualified name instead. Finally, you can also control the list of auto-configuration classes to exclude by using the spring.autoconfigure.exclude property.
+
+[Tip]
+You can define exclusions both at the annotation level and by using the property.
+
+Prev 	Up	 Next
+15. Configuration Classes 	Home	 17. Spring Beans and Dependency Injection
+
+
+SKIP NAVIGATION LINKSSpring Framework
+OVERVIEWPACKAGECLASSUSETREEDEPRECATEDINDEXHELPSUMMARY: NESTED | FIELD | CONSTR | METHODDETAIL: FIELD | CONSTR | METHODSEARCH: 
+Search
+ 
+Package org.springframework.http.codec.multipart
+Class DefaultPartHttpMessageReader
+java.lang.Object
+org.springframework.http.codec.LoggingCodecSupport
+org.springframework.http.codec.multipart.DefaultPartHttpMessageReader
+All Implemented Interfaces:
+HttpMessageReader<Part>
+public class DefaultPartHttpMessageReader
+extends LoggingCodecSupport
+implements HttpMessageReader<Part>
+Default HttpMessageReader for parsing "multipart/form-data" requests to a stream of Parts.
+In default, non-streaming mode, this message reader stores the contents of parts smaller than maxInMemorySize in memory, and parts larger than that to a temporary file in fileStorageDirectory.
+
+This reader can be provided to MultipartHttpMessageReader in order to aggregate all parts into a Map.
+
+Since:
+5.3
+Author:
+Arjen Poutsma
+Field Summary
+Fields inherited from class org.springframework.http.codec.LoggingCodecSupport
+logger
+Constructor Summary
+Constructors
+Constructor
+Description
+DefaultPartHttpMessageReader()
+ 
+Method Summary
+All MethodsInstance MethodsConcrete Methods
+Modifier and Type
+Method
+Description
+boolean
+canRead(ResolvableType elementType, MediaType mediaType)
+Whether the given object type is supported by this reader.
+int
+getMaxInMemorySize()
+Get the configured maximum in-memory size.
+List<MediaType>
+getReadableMediaTypes()
+Return the list of media types supported by this reader.
+reactor.core.publisher.Flux<Part>
+read(ResolvableType elementType, ReactiveHttpInputMessage message, Map<String,Object> hints)
+Read from the input message and decode to a stream of objects.
+reactor.core.publisher.Mono<Part>
+readMono(ResolvableType elementType, ReactiveHttpInputMessage message, Map<String,Object> hints)
+Read from the input message and decode to a single object.
+void
+setBlockingOperationScheduler(reactor.core.scheduler.Scheduler blockingOperationScheduler)
+Set the Reactor Scheduler to be used for creating files and directories, and writing to files.
+void
+setFileStorageDirectory(Path fileStorageDirectory)
+Set the directory used to store parts larger than maxInMemorySize.
+void
+setHeadersCharset(Charset headersCharset)
+Set the character set used to decode headers.
+void
+setMaxDiskUsagePerPart(long maxDiskUsagePerPart)
+Configure the maximum amount of disk space allowed for file parts.
+void
+setMaxHeadersSize(int byteCount)
+Configure the maximum amount of memory that is allowed per headers section of each part.
+void
+setMaxInMemorySize(int maxInMemorySize)
+Configure the maximum amount of memory allowed per part.
+void
+setMaxParts(int maxParts)
+Specify the maximum number of parts allowed in a given multipart request.
+Methods inherited from class org.springframework.http.codec.LoggingCodecSupport
+isEnableLoggingRequestDetails, setEnableLoggingRequestDetails
+Methods inherited from class java.lang.Object
+clone, equals, finalize, getClass, hashCode, notify, notifyAll, toString, wait, wait, wait
+Methods inherited from interface org.springframework.http.codec.HttpMessageReader
+getReadableMediaTypes, read, readMono
+Constructor Details
+DefaultPartHttpMessageReader
+public DefaultPartHttpMessageReader()
+Method Details
+setMaxHeadersSize
+public void setMaxHeadersSize(int byteCount)
+Configure the maximum amount of memory that is allowed per headers section of each part. When the limit
+Parameters:
+byteCount - the maximum amount of memory for headers
+getMaxInMemorySize
+public int getMaxInMemorySize()
+Get the configured maximum in-memory size.
+setMaxInMemorySize
+public void setMaxInMemorySize(int maxInMemorySize)
+Configure the maximum amount of memory allowed per part. When the limit is exceeded:
+file parts are written to a temporary file.
+non-file parts are rejected with DataBufferLimitException.
+By default this is set to 256K.
+
+Parameters:
+maxInMemorySize - the in-memory limit in bytes; if set to -1 the entire contents will be stored in memory
+setMaxDiskUsagePerPart
+public void setMaxDiskUsagePerPart(long maxDiskUsagePerPart)
+Configure the maximum amount of disk space allowed for file parts.
+By default this is set to -1, meaning that there is no maximum.
+
+Note that this property is ignored when maxInMemorySize is set to -1.
+
+setMaxParts
+public void setMaxParts(int maxParts)
+Specify the maximum number of parts allowed in a given multipart request.
+By default this is set to -1, meaning that there is no maximum.
+
+setFileStorageDirectory
+public void setFileStorageDirectory(Path fileStorageDirectory)
+                             throws IOException
+Set the directory used to store parts larger than maxInMemorySize. By default, a directory named spring-webflux-multipart is created under the system temporary directory.
+Note that this property is ignored when maxInMemorySize is set to -1.
+
+Throws:
+IOException - if an I/O error occurs, or the parent directory does not exist
+setBlockingOperationScheduler
+public void setBlockingOperationScheduler(reactor.core.scheduler.Scheduler blockingOperationScheduler)
+Set the Reactor Scheduler to be used for creating files and directories, and writing to files. By default, Schedulers.boundedElastic() is used, but this property allows for changing it to an externally managed scheduler.
+Note that this property is ignored when maxInMemorySize is set to -1.
+
+See Also:
+Schedulers.boundedElastic()
+setHeadersCharset
+public void setHeadersCharset(Charset headersCharset)
+Set the character set used to decode headers. Defaults to UTF-8 as per RFC 7578.
+Parameters:
+headersCharset - the charset to use for decoding headers
+Since:
+5.3.6
+See Also:
+RFC-7578 Section 5.1
+getReadableMediaTypes
+public List<MediaType> getReadableMediaTypes()
+Description copied from interface: HttpMessageReader
+Return the list of media types supported by this reader. The list may not apply to every possible target element type and calls to this method should typically be guarded via canWrite(elementType, null). The list may also exclude media types supported only for a specific element type. Alternatively, use HttpMessageReader.getReadableMediaTypes(ResolvableType) for a more precise list.
+Specified by:
+getReadableMediaTypes in interface HttpMessageReader<Part>
+Returns:
+the general list of supported media types
+canRead
+public boolean canRead(ResolvableType elementType,
+ @Nullable
+ MediaType mediaType)
+Description copied from interface: HttpMessageReader
+Whether the given object type is supported by this reader.
+Specified by:
+canRead in interface HttpMessageReader<Part>
+Parameters:
+elementType - the type of object to check
+mediaType - the media type for the read (possibly null)
+Returns:
+true if readable, false otherwise
+readMono
+public reactor.core.publisher.Mono<Part> readMono(ResolvableType elementType,
+ ReactiveHttpInputMessage message,
+ Map<String,Object> hints)
+Description copied from interface: HttpMessageReader
+Read from the input message and decode to a single object.
+Specified by:
+readMono in interface HttpMessageReader<Part>
+Parameters:
+elementType - the type of objects in the stream which must have been previously checked via HttpMessageReader.canRead(ResolvableType, MediaType)
+message - the message to read from
+hints - additional information about how to read and decode the input
+Returns:
+the decoded object
+read
+public reactor.core.publisher.Flux<Part> read(ResolvableType elementType,
+ ReactiveHttpInputMessage message,
+ Map<String,Object> hints)
+Description copied from interface: HttpMessageReader
+Read from the input message and decode to a stream of objects.
+Specified by:
+read in interface HttpMessageReader<Part>
+Parameters:
+elementType - the type of objects in the stream which must have been previously checked via HttpMessageReader.canRead(ResolvableType, MediaType)
+message - the message to read from
+hints - additional information about how to read and decode the input
+Returns:
+the decoded stream of elements
+
+

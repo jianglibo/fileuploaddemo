@@ -1,4 +1,12 @@
 spring:
+  codec:
+    max-in-memory-size: 1024
+  webflux:
+    multipart:
+      max-in-memory-size: 1KB
+      max-parts: 3
+      max-disk-usage-per-part: 1KB
+      max-headers-size: 5KB
   devtools:
     restart:
       pollInterval: 2s
