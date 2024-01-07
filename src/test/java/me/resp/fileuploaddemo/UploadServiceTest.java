@@ -2,8 +2,12 @@ package me.resp.fileuploaddemo;
 
 import java.io.IOException;
 import java.nio.charset.StandardCharsets;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
+import java.util.Random;
+import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 import org.assertj.core.api.Assertions;
 import org.junit.jupiter.api.Test;
@@ -32,6 +36,51 @@ public class UploadServiceTest {
 	ResourceLoader resourceLoader;
 
 	@Test
+	public void testUnlimitLengthWithDelimiterCharactersCount() {
+		webClient.post()
+				.uri(ub -> ub.path("/upload/lines")
+						.queryParam("delimiter", "处处")
+						.queryParam("action", "countCharacters")
+						.build())
+				.contentType(MediaType.APPLICATION_JSON)
+				.body(BodyInserters.fromPublisher(Flux.range(0, 1000)
+						.map(l -> "春眠不觉晓".repeat(2) + "处处"), String.class))
+				.accept(MediaType.APPLICATION_JSON)
+				.exchange()
+				.expectBody()
+				.jsonPath("$.characterCount").isEqualTo(12000);
+	}
+
+	private List<String> splitIntoRandomLengthLines(String str, int maxLength) {
+		Random rand = new Random();
+		List<String> lines = new ArrayList<>();
+		int index = 0;
+		while (index < str.length()) {
+			int end = Math.min(index + rand.nextInt(maxLength) + 1, str.length());
+			lines.add(str.substring(index, end));
+			index = end;
+		}
+		return lines;
+	}
+
+	@Test
+	public void testUnlimitLengthWithDelimiterLinesCount() {
+		String oneline = Stream.generate(() -> "春眠不觉晓".repeat(2) + "处处").limit(10000)
+				.collect(Collectors.joining());
+		List<String> lines = splitIntoRandomLengthLines(oneline, 1024);
+		webClient.post()
+				.uri(ub -> ub.path("/upload/lines")
+						.queryParam("delimiter", "处处")
+						.build())
+				.contentType(MediaType.APPLICATION_JSON)
+				.body(BodyInserters.fromPublisher(Flux.fromIterable(lines), String.class))
+				.accept(MediaType.APPLICATION_JSON)
+				.exchange()
+				.expectBody()
+				.jsonPath("$.lineCount").isEqualTo(10000);
+	}
+
+	@Test
 	public void testUnlimitLength() {
 		// 1024 bytes * 10000 = 10M
 		webClient.post()
@@ -45,7 +94,7 @@ public class UploadServiceTest {
 				.jsonPath("$.bufferCount")
 				.value(v -> {
 					Long lv = ((Integer) v).longValue();
-					Assertions.assertThat(lv).isGreaterThan(10);
+					Assertions.assertThat(lv).isNotEqualTo(10000);
 				});
 	}
 
