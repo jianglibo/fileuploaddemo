@@ -17,6 +17,7 @@ public class MainRouter {
 					b.path("/upload", b1 -> {
 						b1.GET("", uploadService::uploadGet);
 						b1.POST("/multipart", uploadService::uploadMultipart);
+						b1.POST("/urlencoded", uploadService::urlencoded);
 						b1.POST("/json", uploadService::postJson);
 						b1.POST("/lines", uploadService::lines);
 					});

@@ -19,13 +19,14 @@ import org.springframework.http.MediaType;
 import org.springframework.http.client.MultipartBodyBuilder;
 import org.springframework.test.context.ActiveProfiles;
 import org.springframework.test.web.reactive.server.WebTestClient;
+import org.springframework.util.LinkedMultiValueMap;
+import org.springframework.util.MultiValueMap;
 import org.springframework.web.reactive.function.BodyInserters;
 
 import reactor.core.publisher.Flux;
 
 @SpringBootTest
 @ActiveProfiles("test")
-// @WebFluxTest
 @AutoConfigureWebTestClient
 public class UploadServiceTest {
 
@@ -96,6 +97,34 @@ public class UploadServiceTest {
 					Long lv = ((Integer) v).longValue();
 					Assertions.assertThat(lv).isNotEqualTo(10000);
 				});
+	}
+
+	@Test
+	public void testUrlencodedBig() {
+		MultiValueMap<String, String> formData = new LinkedMultiValueMap<>();
+		formData.add("a", "b".repeat(2048));
+		webClient.post()
+				.uri("/upload/urlencoded")
+				.contentType(MediaType.APPLICATION_FORM_URLENCODED)
+				.bodyValue(formData)
+				.accept(MediaType.APPLICATION_JSON)
+				.exchange()
+				.expectBody()
+				.jsonPath("$.msg").isEqualTo("Exceeded limit on max bytes to buffer : 1024");
+	}
+
+	@Test
+	public void testUrlencodedSmall() {
+		MultiValueMap<String, String> formData = new LinkedMultiValueMap<>();
+		formData.add("a", "b".repeat(512));
+		webClient.post()
+				.uri("/upload/urlencoded")
+				.contentType(MediaType.APPLICATION_FORM_URLENCODED)
+				.bodyValue(formData)
+				.accept(MediaType.APPLICATION_JSON)
+				.exchange()
+				.expectBody()
+				.jsonPath("$.formdata.a").isEqualTo("b".repeat(512));
 	}
 
 	@Test

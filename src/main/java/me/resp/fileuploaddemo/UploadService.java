@@ -14,6 +14,7 @@ import org.springframework.core.io.buffer.DataBufferUtils;
 import org.springframework.http.MediaType;
 import org.springframework.http.codec.multipart.FilePart;
 import org.springframework.stereotype.Component;
+import org.springframework.util.MultiValueMap;
 import org.springframework.web.reactive.function.server.ServerRequest;
 import org.springframework.web.reactive.function.server.ServerResponse;
 
@@ -48,36 +49,63 @@ public class UploadService {
 		return envs;
 	}
 
+	public Mono<ServerResponse> urlencoded(ServerRequest req) {
+		return req.bodyToMono(new ParameterizedTypeReference<MultiValueMap<String, String>>() {
+		}).flatMap(formdata -> {
+			Map<String, Object> model = Map.of(
+					"infos", reqInfo(req),
+					"formdata", formdata);
+			if (acceptJson(req)) {
+				return ServerResponse.ok()
+						.contentType(MediaType.APPLICATION_JSON)
+						.bodyValue(model);
+
+			}
+			return ServerResponse.ok().render("upload", model);
+		}).onErrorResume(t -> {
+			Map<String, Object> model = Map.of(
+					"infos", reqInfo(req),
+					"msg", t.getMessage());
+			log.debug("envs: {}", model);
+			if (acceptJson(req)) {
+				return ServerResponse.ok()
+						.contentType(MediaType.APPLICATION_JSON)
+						.bodyValue(model);
+			} else {
+				return ServerResponse.ok()
+						.render("upload", model);
+			}
+		});
+	}
+
 	public Mono<ServerResponse> uploadMultipart(ServerRequest req) {
 		return req.multipartData().flatMap(parts -> {
 			FilePart filePart = (FilePart) parts.toSingleValueMap()
 					.get("file");
 			return filePart.transferTo(dst).then(Mono.defer(() -> {
+				Map<String, Object> model = Map.of(
+						"infos", reqInfo(req),
+						"filePartFileName", filePart.filename(),
+						"filePartName", filePart.name());
 				if (acceptJson(req)) {
-					return ServerResponse.ok().contentType(MediaType.APPLICATION_JSON).bodyValue(
-							Map.of(
-									"infos", reqInfo(req),
-									"filePartFileName", filePart.filename(),
-									"filePartName", filePart.name()));
+					return ServerResponse.ok()
+							.contentType(MediaType.APPLICATION_JSON)
+							.bodyValue(
+									model);
 
 				}
-				return ServerResponse.ok().render("upload",
-						Map.of(
-								"infos", reqInfo(req),
-								"msg",
-								String.format("'%s' as name '%s' uploaded.", filePart.filename(), filePart.name())));
+				return ServerResponse.ok().render("upload", model);
 			}));
 		}).onErrorResume(t -> {
+			Map<String, Object> model = Map.of(
+					"infos", reqInfo(req),
+					"msg", t.getMessage());
 			if (acceptJson(req)) {
-				return ServerResponse.ok().contentType(MediaType.APPLICATION_JSON).bodyValue(
-						Map.of(
-								"infos", reqInfo(req),
-								"msg", t.getMessage()));
+				return ServerResponse.ok()
+						.contentType(MediaType.APPLICATION_JSON)
+						.bodyValue(model);
 			} else {
-				return ServerResponse.ok().render("upload",
-						Map.of(
-								"infos", reqInfo(req),
-								"msg", t.getMessage()));
+				return ServerResponse.ok().render("upload", model);
 			}
 		});
 	}
@@ -186,12 +214,16 @@ public class UploadService {
 	public Mono<ServerResponse> postJson(ServerRequest req) {
 		return req.bodyToMono(new ParameterizedTypeReference<List<Map<String, Object>>>() {
 		}).flatMap(m -> {
-			return ServerResponse.ok().contentType(MediaType.APPLICATION_JSON).bodyValue(m);
+			return ServerResponse.ok()
+					.contentType(MediaType.APPLICATION_JSON)
+					.bodyValue(m);
 		}).onErrorResume(t -> {
 			log.debug("", t);
-			return ServerResponse.ok().contentType(MediaType.APPLICATION_JSON).bodyValue(
-					Map.of("msg",
-							t.getMessage()));
+			return ServerResponse.ok()
+					.contentType(MediaType.APPLICATION_JSON)
+					.bodyValue(
+							Map.of("msg",
+									t.getMessage()));
 		});
 	}
 	// public Mono<ServerResponse> postJson(ServerRequest req) {
